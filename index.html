@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+    <link href="./style.css" rel="stylesheet">
+		<!--
+      <link rel="stylesheet" href="./css/pmd.css">
+		  <link rel="stylesheet" href="./css/nmsicons.css">
+		  <link href="./css/style.css" rel="stylesheet">
+    -->
+    <!--
+		  <script src="./js/rivets.bundled.min.js"></script>
+		  <script src="./js/zepto.min.js"></script>
+		  <script src="./js/nuportalglyphs.js"></script>
+    -->
+		<title>AGT Fleet Tracker</title>
+	</head>
+
+	<body onload="move();">
+    <div class="header flex">
+			<div><img id="agt-logo" src="./img/agtLogo.png"/></div>
+			<div>AGT Fleet Tracker</div>
+			<div>by mhebrard (Coordinate system by pahefu)</div>
+		</div>
+    <div class="main flex">
+      <div class="menu">
+        <div id="home"><span class="fa fa-map-marker fa-fw"/></div>
+        <div id="add"><span class="fa fa-plus fa-fw"/></div>
+        <div id="mode"><span class="fa fa-globe fa-fw"/></div>
+      </div>
+      <div class="content" id="three">
+      </div>
+    </div>
+
+    <script src="./js/scene.js"></script>
+    <script src="./js/three.min.js"></script>
+    <script src="./js/TrackballControls.js"></script>
+    <script src="https://use.fontawesome.com/b6ac3d3b75.js"></script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/87/three.min.js"></script>-->
+  </body>
+</html>

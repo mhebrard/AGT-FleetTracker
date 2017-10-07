@@ -1,0 +1,32 @@
+body {
+  background-color: #333;
+  color: #ddd;
+}
+
+.flex {
+  display: flex;
+}
+
+.header {
+  align-items: center;
+}
+.header div {
+  margin: 2px 5px;
+}
+
+.menu div {
+  width: 25px;
+  height: 25px;
+  text-align: center;
+  margin: 2px 5px;
+}
+
+#agt-logo {
+  width: 25px;
+  height: 25px;
+}
+
+.content {
+  flex-grow: 1;
+  border: 0px solid red;
+}
