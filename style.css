@@ -1,20 +1,31 @@
 body {
   background-color: #333;
   color: #ddd;
+  overflow: hidden;
 }
 
 .flex {
   display: flex;
 }
 
-.header {
+#header {
+  background-color: #333;
   align-items: center;
+  position: absolute;
+	top: 0px;
+  width: 100%;
 }
-.header div {
+#header div {
   margin: 2px 5px;
 }
 
-.menu div {
+#menu {
+  background-color: #333;
+  position: absolute;
+	top: 30px;
+  height: 100%;
+}
+#menu div {
   width: 25px;
   height: 25px;
   text-align: center;
@@ -24,9 +35,4 @@ body {
 #agt-logo {
   width: 25px;
   height: 25px;
-}
-
-.content {
-  flex-grow: 1;
-  border: 0px solid red;
 }

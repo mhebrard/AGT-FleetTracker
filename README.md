@@ -20,3 +20,6 @@ The idea is to track the coordinate of the AGT fleet.
  * Select galaxy (All / Euclid / ...)
  * Pilot (All / AfWngs / ...)
  * Status (current position / Path)
+
+* Galaxy center coordinate is: 07FF:007F:07FF:0XXX (0 - 0 - 0 - 0XXX)
+* range: 0001:0001:0001:0001 .. 0FFF:00FF:0FFF:02FF
