@@ -1,64 +1,75 @@
 var container;
 var camera, controls, scene, renderer;
-var cross;
-var lookAtScene = true;
-
-
-// Display current FOV
-function setFov(fov) {
-	camera.setFov(fov);
-	document.getElementById('fov').innerHTML = 'FOV '+ fov.toFixed(2) +'&deg;' ;
-}
-
-function setLens(lens) {
-  // try adding a tween effect while changing focal length, and it'd be even cooler!
-	var fov = camera.setLens(lens);
-	document.getElementById('fov').innerHTML = 'Converted ' + lens + 'mm lens to FOV '+ fov.toFixed(2) +'&deg;' ;
-}
-
-function setOrthographic() {
-  camera.toOrthographic();
-  document.getElementById('fov').innerHTML = 'Orthographic mode' ;
-	console.log(camera);
-}
-
-function setPerspective() {
-  camera.toPerspective();
-  document.getElementById('fov').innerHTML = 'Perspective mode' ;
-}
+var camDist = 3000; // Default camera distance from center ensure diagonal always visible
 
 function init() {
 	// Container
 	container = document.createElement('div');
 	document.body.appendChild(container);
+
+	// Renderer
+	// renderer = new THREE.CanvasRenderer();
+	renderer = new THREE.WebGLRenderer( { antialias: false } );
+	renderer.setPixelRatio( window.devicePixelRatio );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	container.appendChild( renderer.domElement );
+
 	// Camera
-	camera = new THREE.CombinedCamera( window.innerWidth / 2, window.innerHeight / 2, 70, 1, 1000, - 500, 1000 );
-	camera.position.x = 200;
-	camera.position.y = 100;
-	camera.position.z = 200;
+	var aspect = window.innerWidth / window.innerHeight;
+	var frustumSize = 4100; // -2050 .. 2050
+	camera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, camDist * 2 );
+	// camera = new THREE.PerspectiveCamera( 100, aspect, 1, 4500 );
+
+	// Controls
+	controls = new THREE.OrbitControls( camera, renderer.domElement );
+	controls.addEventListener( 'change', render );
+
 	// Scene
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color( 0x111111 );
 	// Grid
-	var gridHelper = new THREE.GridHelper( 2 * 0x07FF, 0xFF );
+	var gridHelper = new THREE.GridHelper(0x0FFF, 16); // Grid from 0x0001 to 0x0FFF every 0x0100 (16 divisions)
 	scene.add( gridHelper );
 	// Content
-	var geometry = new THREE.BoxGeometry( 10, 10, 10 );
-	var material = new THREE.MeshLambertMaterial( { color: 0xff00ff, overdraw: 0.5 } );
-	/* var markers = [
-		{pos: '07FF:007F:07FF:0001', color: 0x00ffff},
-		{pos: '07F0:007F:07FF:0001', color: 0x00ff00}, {pos: '07FF:007F:07F0:0001', color: 0x00ff00}, {pos: '07F0:007F:07F0:0001', color: 0x00ff00},
-		{pos: '070F:007F:07FF:0001', color: 0x0000ff}, {pos: '07FF:007F:070F:0001', color: 0x0000ff}, {pos: '070F:007F:070F:0001', color: 0x0000ff}
-	];*/
+	var geometry = new THREE.BoxGeometry(100, 100, 100);
+	var material = new THREE.MeshLambertMaterial( { color: 0xff11ff, overdraw: 0.5 } );
+	var material2 = new THREE.MeshLambertMaterial( { color: 0x11ff11, overdraw: 0.5 } );
 	var center = '07FF:007F:07FF:0001';
 	var obj = hexToVox('07FF:007F:07FF:0001');
-	var center = new THREE.Mesh(geometry, material);
+	var center = new THREE.Mesh(geometry, material2);
 	center.position.x = obj.x;
 	center.position.y = obj.y;
 	center.position.z = obj.z;
 	scene.add(center);
-	for (var i = 1; i < 0x0FFF; i++) {
-		var shift = i * 0x7F;
+	var min = hexToVox('0001:0001:0001:0001');
+	var ma = new THREE.Mesh(geometry, material2);
+	ma.position.x = min.x;
+	ma.position.y = min.y;
+	ma.position.z = min.z;
+	scene.add(ma);
+	var max = hexToVox('0FFF:00FF:0FFF:02FF');
+	var mb = new THREE.Mesh(geometry, material2);
+	mb.position.x = max.x;
+	mb.position.y = max.y;
+	mb.position.z = max.z;
+	scene.add(mb);
+	console.log(min, max);
+	// test positie axis
+	var mp = new THREE.Mesh(geometry, material2);
+	mp.position.x = 200;
+	mp.position.y = 100;
+	mp.position.z = 200;
+	scene.add(mp);
+	/*
+	var z = new THREE.Mesh(geometry, material2);
+	z.position.x = 100;
+	z.position.y = -130;
+	z.position.z = 100;
+	scene.add(z);
+	*/
+	// Markers every 0x0100
+	for (var i = 1; i < 9; i++) {
+		var shift = i * 0x100;
   	var e = new THREE.Mesh(geometry, material);
 		e.position.x = obj.x + shift;
     e.position.y = obj.y;
@@ -100,142 +111,48 @@ function init() {
     se.position.z = obj.z - shift;
 		scene.add(se);
   }
-	/* for ( var i = 0; i < 100; i ++ ) {
-		var cube = new THREE.Mesh( geometry, material );
-		cube.position.x = Math.floor( ( Math.random() * 1000 - 500 ) / 50 ) * 50 + 25;
-		cube.position.y = ( cube.scale.y * 50 ) / 2;
-		cube.position.z = Math.floor( ( Math.random() * 1000 - 500 ) / 50 ) * 50 + 25;
-		scene.add(cube);
-	}
-	*/
+
 	// Lights
-	var ambientLight = new THREE.AmbientLight( Math.random() * 0x10 );
-	scene.add( ambientLight );
-	var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-	directionalLight.position.x = Math.random() - 0.5;
-	directionalLight.position.y = Math.random() - 0.5;
-	directionalLight.position.z = Math.random() - 0.5;
-	directionalLight.position.normalize();
-	scene.add( directionalLight );
-	var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-	directionalLight.position.x = Math.random() - 0.5;
-	directionalLight.position.y = Math.random() - 0.5;
-	directionalLight.position.z = Math.random() - 0.5;
-	directionalLight.position.normalize();
-	scene.add( directionalLight );
-	renderer = new THREE.CanvasRenderer();
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	container.appendChild( renderer.domElement );
-	// stats = new Stats();
-	// container.appendChild( stats.dom );
-	window.addEventListener( 'resize', onWindowResize, false );
-	function onWindowResize(){
-		camera.setSize( window.innerWidth, window.innerHeight );
-		camera.updateProjectionMatrix();
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		// controls.handleResize();
-		// render();
-	}
-	//
-	setOrthographic();
+	var fillLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+	scene.add(fillLight);
+	var centerTopLight = new THREE.PointLight( 0xffffff, 2, 0);
+	centerTopLight.position.set(0, 250, 0);
+	scene.add(centerTopLight);
+	var centerBottomLight = new THREE.PointLight( 0xffffff, 2, 0);
+	centerBottomLight.position.set(0, -250, 0);
+	scene.add(centerBottomLight);
+
+	// Run the scene
+	toTopView();
+	render();
 	animate();
 }
 
-function movingCamera() {
-  // Camera
-	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 2050 );
-	camera.position.x = 2000;
-  camera.position.y = 100;
-  camera.position.z = 2000;
+function toTopView() {
+	// Reset init position
+	controls.reset();
+	// move on top
+	camera.position.x = 0;
+	camera.position.y = camDist;
+	camera.position.z = 0;
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
+}
 
-  // Controls
-	controls = new THREE.TrackballControls( camera );
-	controls.rotateSpeed = 1.0;
-	controls.zoomSpeed = 1.2;
-	controls.panSpeed = 0.8;
-	controls.noZoom = false;
-	controls.noPan = false;
-	controls.staticMoving = true;
-	controls.dynamicDampingFactor = 0.3;
-	controls.keys = [ 65, 83, 68 ];
-	controls.addEventListener( 'change', render );
-	// World
-	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x111111 );
-	// scene.fog = new THREE.FogExp2( 0x111111, 0.002 );
-	// var geometry = new THREE.CylinderGeometry( 0, 10, 30, 4, 1 );
-  /* var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-  var material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
-	for ( var i = 0; i < 500; i ++ ) {
-		var mesh = new THREE.Mesh( geometry, material );
-		mesh.position.x = ( Math.random() ) * 1000;
-		mesh.position.y = ( Math.random() ) * 1000;
-		mesh.position.z = ( Math.random() ) * 1000;
-		mesh.updateMatrix();
-		mesh.matrixAutoUpdate = false;
-		scene.add( mesh );
-	}*/
-  // Boundaries
-  var lim = new THREE.BoxGeometry( 10, 10, 10 );
-  var limM = new THREE.MeshPhongMaterial( { color: 0xff00ff, flatShading: true } );
-  // center, 0 0, x 0, x y, 0 y, 0 0
-  var pos = ['07FF:007F:07FF:0001','0001:0001:0001:0001', '07FF:0001:0001:0001','07FF:007F:0001:0001','0001:007F:0001:0001', '07FF:007F:07FF:0001'];
-  // create a Line
-  var lineM = new THREE.LineBasicMaterial({ color: 0xff00ff });
-  var lineG = new THREE.Geometry();
-  pos.forEach(p => {
-    var obj = hexToVox(p);
-    console.log(obj);
-    var mesh = new THREE.Mesh( lim, limM );
-		mesh.position.x = obj.x;
-    mesh.position.y = obj.y;
-    mesh.position.z = obj.z;
-		mesh.updateMatrix();
-		mesh.matrixAutoUpdate = false;
-    // links
-    lineG.vertices.push(new THREE.Vector3(obj.x, obj.y, obj.z));
-		scene.add( mesh );
-  });
-  var line = new THREE.Line(lineG, lineM);
-  scene.add(line);
-
-	// lights
-	var light = new THREE.DirectionalLight( 0xffffff );
-	light.position.set( 1, 1, 1 );
-	scene.add( light );
-	var light = new THREE.DirectionalLight( 0x002288 );
-	light.position.set( -1, -1, -1 );
-	scene.add( light );
-	var light = new THREE.AmbientLight( 0x222222 );
-	scene.add( light );
-	// renderer
-	renderer = new THREE.WebGLRenderer( { antialias: false } );
-	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	container = document.getElementById( 'container' );
-	container.appendChild( renderer.domElement );
-	// stats = new Stats();
-	// container.appendChild( stats.dom );
-	//
-	window.addEventListener( 'resize', onWindowResize, false );
-
-	render();
-  animate();
+function toLateralView() {
+	// Reset init position
+	controls.reset();
+	// Move on left
+	camera.position.x = -camDist;
+	camera.position.y = 0;
+	camera.position.z = 0;
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
 }
 
 function animate() {
-	requestAnimationFrame( animate );
-	// controls.update();
-	render();
+	requestAnimationFrame(animate);
+	controls.update();
 }
 
 function render() {
-	// renderer.render( scene, camera );
-	// stats.update();
-	var timer = Date.now() * 0.0001;
-	camera.position.x = Math.cos( timer ) * 200;
-	camera.position.z = Math.sin( timer ) * 200;
-	if ( lookAtScene ) camera.lookAt( scene.position );
 	renderer.render( scene, camera );
 }
